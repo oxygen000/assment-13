@@ -5,7 +5,6 @@
  * Import your modules and initialize the app here.
  */
 
-
 display();
 function display() {
   const searchSection = document.getElementById("search-filters-section");
@@ -940,10 +939,10 @@ function initFilterCards() {
       const base = "https://nutriplan-api.vercel.app/api/meals/filter";
 
       const urls = [
-        `${base}?category=${encodeURIComponent(value)}`,
-        `${base}?c=${encodeURIComponent(value)}`,
-        `${base}?area=${encodeURIComponent(value)}`,
-        `${base}?a=${encodeURIComponent(value)}`,
+        `${base}?category=${value}`,
+        `${base}?c=${value}`,
+        `${base}?area=${value}`,
+        `${base}?a=${value}`,
       ];
 
       let data = [];
@@ -1117,4 +1116,132 @@ function initAreaFilter() {
       `;
     }
   });
+}
+
+showProductCategories();
+async function showProductCategories() {
+  const grid = document.getElementById("products-grid");
+
+  if (!grid) return;
+
+  grid.innerHTML = `
+    <div class="col-span-full flex items-center justify-center py-12">
+      <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600"></div>
+    </div>
+  `;
+
+  try {
+    const res1 = await fetch(
+      "https://nutriplan-api.vercel.app/api/products/categories",
+    );
+    const data1 = await res1.json();
+
+    const categories = data1.results || [];
+    if (categories.length === 0) {
+      grid.innerHTML = `<p class="text-gray-600">No categories found</p>`;
+      return;
+    }
+
+    const catId = categories[0].name;
+
+    const res2 = await fetch(
+      `https://nutriplan-api.vercel.app/api/products/category/${catId}`,
+    );
+    const data2 = await res2.json();
+
+    const products = data2.results || [];
+
+    if (products.length === 0) {
+      grid.innerHTML = `<p class="text-gray-600">No categories found</p>`;
+      return;
+    }
+
+    let box = "";
+
+    for (let i = 0; i < products.length; i++) {
+      const product = products[i];
+
+      box += `
+        <div
+                class="product-card bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all cursor-pointer group"
+                data-barcode="7613034626844"
+              >
+                <div
+                  class="relative h-40 bg-gray-100 flex items-center justify-center overflow-hidden"
+                >
+                  <img
+                    class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
+                    src="${product.image}"
+                    alt="${product.name}"
+                    loading="lazy"
+                  />
+
+                  <!-- Nutri-Score Badge -->
+                  <div
+                    class="absolute top-2 left-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded uppercase"
+                  >
+                    Nutri-Score ${product.nutritionGrade}
+                  </div>
+
+                  <!-- NOVA Badge -->
+                  <div
+                    class="absolute top-2 right-2 bg-lime-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center"
+                    title="NOVA 2"
+                  >
+                    ${product.novaGroup}
+                  </div>
+                </div>
+
+                <div class="p-4">
+                  <p
+                    class="text-xs text-emerald-600 font-semibold mb-1 truncate"
+                  >
+                    ${product.brand}
+                  </p>
+                  <h3
+                    class="font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-emerald-600 transition-colors"
+                  >
+                    ${product.name}
+                  </h3>
+
+                  <div
+                    class="flex items-center gap-3 text-xs text-gray-500 mb-3"
+                  >
+                    <span
+                      ><i class="fa-solid fa-weight-scale mr-1"></i>250g</span
+                    >
+                    <span
+                      ><i class="fa-solid fa-fire mr-1"></i>350 kcal/100g</span>
+                    
+                  </div>
+
+                  <!-- Mini Nutrition -->
+                  <div class="grid grid-cols-4 gap-1 text-center">
+                    <div class="bg-emerald-50 rounded p-1.5">
+                      <p class="text-xs font-bold text-emerald-700">${product.nutrients.protein}</p>
+                      <p class="text-[10px] text-gray-500">Protein</p>
+                    </div>
+                    <div class="bg-blue-50 rounded p-1.5">
+                      <p class="text-xs font-bold text-blue-700">${product.nutrients.carbs}</p>
+                      <p class="text-[10px] text-gray-500">Carbs</p>
+                    </div>
+                    <div class="bg-purple-50 rounded p-1.5">
+                      <p class="text-xs font-bold text-purple-700">${product.nutrients.fat}</p>
+                      <p class="text-[10px] text-gray-500">Fat</p>
+                    </div>
+                    <div class="bg-orange-50 rounded p-1.5">
+                      <p class="text-xs font-bold text-orange-700">${product.nutrients.sugar}</p>
+                      <p class="text-[10px] text-gray-500">Sugar</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+      `;
+    }
+
+    grid.innerHTML = box;
+  } catch (err) {
+    console.log(err);
+    grid.innerHTML = `<p class="text-red-500">Failed to load categories</p>`;
+  }
 }
